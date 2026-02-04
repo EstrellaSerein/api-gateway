@@ -22,6 +22,7 @@ class Settings(BaseAppSettings):
     GATWEY_HEALTH_CHECK_TIMEOUT: int = int(os.getenv("GATWEY_HEALTH_CHECK_TIMEOUT", "10"))
     REQUEST_TIMEOUT:  int = int(os.getenv("GATWEY_HEALTH_REQUEST_TIMEOUT", "120"))
     RATE_LIMIT_PER_MINUTE:  int = int(os.getenv("GATWEY_HEALTH_RATE_LIMIT_PER_MINUTE", "120"))
+    NEW_API_BASE_URL: Optional[str] = os.getenv("NEW_API_BASE_URL")
     # 模型实例配置
     MODEL_INSTANCES: Dict[str, List[Dict[str, Any]]] = Field(
         default_factory=dict,
