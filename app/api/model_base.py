@@ -12,6 +12,7 @@ import math
 
 import json
 from app.core.model_load_balencer import ModelLoadBalancer
+from app.core.config import settings
 
 # 全局大模型负载均衡器实例
 model_lb = ModelLoadBalancer()
@@ -24,6 +25,33 @@ logger.setLevel(logging.DEBUG)
 
 # 路由定义
 router = APIRouter()
+
+
+@router.get("/modelbase/newapi/data")
+async def fetch_new_api_data(request: Request):
+    """从 new-api 获取监控数据并透传返回"""
+    if not settings.NEW_API_BASE_URL:
+        raise HTTPException(status_code=500, detail="NEW_API_BASE_URL 未配置")
+
+    base_url = settings.NEW_API_BASE_URL.rstrip("/")
+    target_url = f"{base_url}/api/data/"
+    params = dict(request.query_params)
+
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.get(target_url, params=params, timeout=30)
+            response.raise_for_status()
+            return response.json()
+        except httpx.HTTPStatusError as exc:
+            raise HTTPException(
+                status_code=exc.response.status_code,
+                detail=f"new-api 响应错误: {exc.response.text}",
+            ) from exc
+        except httpx.RequestError as exc:
+            raise HTTPException(
+                status_code=502,
+                detail=f"无法连接 new-api: {str(exc)}",
+            ) from exc
 
 # 监控端点定义
 @router.get("/modelbase/metrics/global")
@@ -329,4 +357,3 @@ async def model_request(
         else:
             logger.error(f"未知错误: {str(e)}")
             raise HTTPException(status_code=500, detail=f"内部服务器错误: {str(e)}")
-
